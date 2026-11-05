@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Love Arcade: Ultimate Quest 🕹️✨</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Retro Pixel Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    * {
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: manipulation;
+    }
+
+    html, body {
+      height: 100%;
+      height: -webkit-fill-available;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Press Start 2P', monospace;
+      background: radial-gradient(circle at center, #09122b 0%, #030712 100%);
+      color: #fff;
+    }
+
+    canvas {
+      touch-action: none;
+    }
+
+    /* 8-Bit Border Styling */
+    .pixel-box {
+      border: 4px solid #fff;
+      box-shadow: 
+        -4px 0 0 0 #000,
+        4px 0 0 0 #000,
+        0 -4px 0 0 #000,
+        0 4px 0 0 #000,
+        0 0 0 4px #3b82f6,
+        0 0 25px rgba(59, 130, 246, 0.6);
+      background-color: rgba(13, 19, 38, 0.95);
+    }
+
+    .pixel-btn {
+      position: relative;
+      display: inline-block;
+      padding: 12px 18px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #ffffff;
+      background-color: #2563eb;
+      border: 3px solid #60a5fa;
+      box-shadow: inset -4px -4px 0px 0px #1e40af, 0 4px 10px rgba(0,0,0,0.5);
+      cursor: pointer;
+      border-radius: 6px;
+      transition: transform 0.05s, background-color 0.1s;
+    }
+
+    .pixel-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: inset 2px 2px 0px 0px #1e40af;
+      background-color: #1d4ed8;
+    }
+
+    /* CRT Overlay Effect */
+    .crt-overlay {
+      background: linear-gradient(
+        rgba(18, 16, 16, 0) 50%, 
+        rgba(0, 0, 0, 0.25) 50%
+      );
+      background-size: 100% 4px;
+      pointer-events: none;
+    }
+
+    /* Card Flip FX */
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+    .transform-style-3d {
+      transform-style: preserve-3d;
+      transition: transform 0.35s ease-in-out;
+    }
+    .backface-hidden {
+      backface-visibility: hidden;
+    }
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+
+    /* Blue Flower Glow Animations */
+    .blue-flower-glow {
+      filter: drop-shadow(0 0 15px #3b82f6) drop-shadow(0 0 35px #1d4ed8) drop-shadow(0 0 60px #60a5fa);
+      animation: flowerPulse 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes flowerPulse {
+      0% {
+        filter: drop-shadow(0 0 15px #2563eb) drop-shadow(0 0 30px #1d4ed8);
+        transform: scale(1);
+      }
+      100% {
+        filter: drop-shadow(0 0 25px #60a5fa) drop-shadow(0 0 50px #3b82f6) drop-shadow(0 0 75px #93c5fd);
+        transform: scale(1.03);
+      }
+    }
+
+    .glow-text {
+      text-shadow: 0 0 10px #3b82f6, 0 0 20px #2563eb, 0 0 30px #60a5fa;
+    }
+  </style>
+</head>
+<body class="flex flex-col items-center justify-between min-h-screen p-2 sm:p-4 relative selection:bg-blue-600">
+
+  <!-- Background Canvas -->
+  <canvas id="bgCanvas" class="fixed inset-0 w-full h-full pointer-events-none z-0"></canvas>
+
+  <!-- CRT Layer -->
+  <div class="fixed inset-0 crt-overlay z-50"></div>
+
+  <!-- Bottom-Left Custom Attribution -->
+  <div class="fixed bottom-3 left-3 z-50 text-[9px] sm:text-[10px] text-blue-300/80 bg-slate-950/80 px-2.5 py-1.5 rounded-lg border border-blue-500/30 backdrop-blur-sm pointer-events-none font-['VT323'] tracking-wider">
+    Made by Kodosha for Mariami 💙
+  </div>
+
+  <!-- Audio Toggle Button -->
+  <button id="sound-toggle" onclick="toggleAudio()" class="fixed top-3 right-3 z-50 text-xs px-3 py-2 bg-slate-900/90 border-2 border-blue-500 rounded-xl text-blue-400 active:scale-95 shadow-lg">
+    <i class="fa-solid fa-volume-high" id="sound-icon"></i>
+  </button>
+
+  <!-- STAGE 1: CHARACTER SELECT & NAME -->
+  <section id="stage-1" class="w-full max-w-md my-auto space-y-5 text-center z-10 py-4">
+    <div class="pixel-box p-5 sm:p-6 rounded-2xl space-y-4">
+      <div class="inline-block px-3 py-1 bg-blue-900/80 border border-blue-400 text-blue-300 text-[10px] tracking-widest rounded-full mb-1">
+        THE ULTIMATE QUEST 🕹️
+      </div>
+      
+      <h1 class="text-lg sm:text-2xl text-blue-400 font-bold tracking-tight leading-relaxed glow-text">
+        LOVE ARCADE
+      </h1>
+
+      <p class="font-['VT323'] text-lg text-slate-300">
+        Beat all 7 stages to unlock the magical blue flower finale!
+      </p>
+
+      <!-- Mascot Options -->
+      <div class="grid grid-cols-3 gap-2 sm:gap-3 pt-1">
+        <button onclick="selectMascot('cat')" id="mascot-cat" class="mascot-btn p-3 border-2 border-blue-500 rounded-xl bg-blue-950 flex flex-col items-center gap-2">
+          <span class="text-3xl">🐱</span>
+          <span class="text-[8px] sm:text-[9px] text-blue-200">PIXEL CAT</span>
+        </button>
+        <button onclick="selectMascot('bear')" id="mascot-bear" class="mascot-btn p-3 border-2 border-slate-700 rounded-xl bg-slate-950/50 flex flex-col items-center gap-2 hover:bg-blue-900/60 transition">
+          <span class="text-3xl">🧸</span>
+          <span class="text-[8px] sm:text-[9px] text-slate-400">TEDDY</span>
+        </button>
+        <button onclick="selectMascot('bunny')" id="mascot-bunny" class="mascot-btn p-3 border-2 border-slate-700 rounded-xl bg-slate-950/50 flex flex-col items-center gap-2 hover:bg-blue-900/60 transition">
+          <span class="text-3xl">🐰</span>
+          <span class="text-[8px] sm:text-[9px] text-slate-400">BUNNY</span>
+        </button>
+      </div>
+
+      <!-- Player Name Input -->
+      <div class="space-y-1.5 pt-1">
+        <label class="text-[9px] text-slate-400 block uppercase">Enter Player Name:</label>
+        <input type="text" id="player-name-input" value="Cutie..." max="12" class="w-full bg-slate-900/90 border-2 border-blue-500 text-center text-blue-300 py-2.5 px-3 text-xs outline-none rounded-xl focus:ring-2 focus:ring-blue-400">
+      </div>
+
+      <div class="pt-2">
+        <button onclick="startStage2()" class="pixel-btn w-full py-4 text-xs">
+          START QUEST ▶
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- STAGE 2: HEART CATCHER MINI-GAME -->
+  <section id="stage-2" class="hidden w-full max-w-md my-auto flex flex-col items-center gap-2.5 z-10 py-2">
+    <div class="w-full flex justify-between items-center text-xs bg-slate-900/90 p-3 border-2 border-blue-500 rounded-xl">
+      <div class="flex items-center gap-2">
+        <span id="player-avatar-display" class="text-xl">🐱</span>
+        <span id="player-name-display" class="text-blue-300 text-[10px]">Mariami</span>
+      </div>
+      <div class="text-yellow-400 text-[10px]">
+        STAGE 1/7: <span id="game-score">0</span> / 15
+      </div>
+    </div>
+
+    <div class="pixel-box p-1 rounded-2xl w-full relative overflow-hidden">
+      <canvas id="catcherCanvas" class="w-full h-72 sm:h-80 bg-slate-950 rounded-xl block"></canvas>
+      
+      <div id="game-start-prompt" class="absolute inset-0 bg-slate-950/85 flex flex-col items-center justify-center p-4 text-center space-y-3">
+        <p class="text-xs text-blue-300 leading-relaxed">Catch 15 hearts/stars! Avoid bombs (-1)! 💣</p>
+        <button onclick="runCatcherGame()" class="pixel-btn text-xs py-2.5 px-5">READY!</button>
+      </div>
+    </div>
+
+    <div class="w-full grid grid-cols-2 gap-3 pt-1">
+      <button id="btn-left" class="pixel-btn py-4 text-center bg-slate-800 border-slate-600 text-sm active:bg-blue-700">
+        ◀ LEFT
+      </button>
+      <button id="btn-right" class="pixel-btn py-4 text-center bg-slate-800 border-slate-600 text-sm active:bg-blue-700">
+        RIGHT ▶
+      </button>
+    </div>
+  </section>
+
+  <!-- STAGE 3: MEMORY MATCHING PUZZLE -->
+  <section id="stage-3" class="hidden w-full max-w-md my-auto flex flex-col items-center gap-3 z-10 py-4">
+    <div class="w-full flex justify-between items-center text-xs bg-slate-900/90 p-3 border-2 border-blue-500 rounded-xl">
+      <div class="text-blue-300 text-[10px]">STAGE 2/7: MEMORY PUZZLE</div>
+      <div class="text-yellow-400 text-[10px]">MATCH ALL 4 PAIRS</div>
+    </div>
+
+    <div id="memory-grid" class="grid grid-cols-4 gap-2.5 w-full p-3 bg-slate-950/90 border-4 border-blue-600 rounded-2xl">
+    </div>
+  </section>
+
+  <!-- STAGE 4: SKY RUNNER MINI-GAME -->
+  <section id="stage-4" class="hidden w-full max-w-md my-auto flex flex-col items-center gap-2.5 z-10 py-2">
+    <div class="w-full flex justify-between items-center text-xs bg-slate-900/90 p-3 border-2 border-blue-500 rounded-xl">
+      <div class="text-blue-300 text-[10px]">STAGE 3/7: SKY RUNNER</div>
+      <div class="text-yellow-400 text-[10px]">
+        STARS: <span id="runner-score">0</span> / 6
+      </div>
+    </div>
+
+    <div class="pixel-box p-1 rounded-2xl w-full relative overflow-hidden">
+      <canvas id="runnerCanvas" class="w-full h-72 sm:h-80 bg-slate-950 rounded-xl block"></canvas>
+      
+      <div id="runner-start-prompt" class="absolute inset-0 bg-slate-950/85 flex flex-col items-center justify-center p-4 text-center space-y-3">
+        <p class="text-xs text-blue-300 leading-relaxed">Jump over red spikes (-1 star) & collect 6 Blue Stars!</p>
+        <button onclick="runRunnerGame()" class="pixel-btn text-xs py-2.5 px-5">JUMP & RUN! 🚀</button>
+      </div>
+    </div>
+
+    <button id="btn-jump" onclick="triggerRunnerJump()" class="pixel-btn w-full py-4 text-center bg-blue-600 border-blue-400 text-xs active:bg-blue-700">
+      TAP TO JUMP ⬆️
+    </button>
+  </section>
+
+  <!-- STAGE 5: NEON RHYTHM TAP -->
+  <section id="stage-5" class="hidden w-full max-w-md my-auto flex flex-col items-center gap-2.5 z-10 py-2">
+    <div class="w-full flex justify-between items-center text-xs bg-slate-900/90 p-3 border-2 border-blue-500 rounded-xl">
+      <div class="text-blue-300 text-[10px]">STAGE 4/7: RHYTHM TAP</div>
+      <div class="text-yellow-400 text-[10px]">
+        HITS: <span id="rhythm-score">0</span> / 8
+      </div>
+    </div>
+
+    <div class="pixel-box p-1 rounded-2xl w-full relative overflow-hidden">
+      <canvas id="rhythmCanvas" class="w-full h-72 sm:h-80 bg-slate-950 rounded-xl block"></canvas>
+      
+      <div id="rhythm-start-prompt" class="absolute inset-0 bg-slate-950/85 flex flex-col items-center justify-center p-4 text-center space-y-3">
+        <p class="text-xs text-blue-300 leading-relaxed">Tap lane buttons when falling symbols hit the line!</p>
+        <button onclick="runRhythmGame()" class="pixel-btn text-xs py-2.5 px-5">START RHYTHM! 🎵</button>
+      </div>
+    </div>
+
+    <div class="w-full grid grid-cols-3 gap-2 pt-1">
+      <button onclick="hitRhythmLane(0)" class="pixel-btn py-3 text-center bg-blue-600 border-blue-400 text-xs active:bg-blue-700">🌸 LANE 1</button>
+      <button onclick="hitRhythmLane(1)" class="pixel-btn py-3 text-center bg-blue-600 border-blue-400 text-xs active:bg-blue-700">💙 LANE 2</button>
+      <button onclick="hitRhythmLane(2)" class="pixel-btn py-3 text-center bg-blue-600 border-blue-400 text-xs active:bg-blue-700">✨ LANE 3</button>
+    </div>
+  </section>
+
+  <!-- STAGE 6: PIXEL SPACE DEFENDER -->
+  <section id="stage-6" class="hidden w-full max-w-md my-auto flex flex-col items-center gap-2.5 z-10 py-2">
+    <div class="w-full flex justify-between items-center text-xs bg-slate-900/90 p-3 border-2 border-blue-500 rounded-xl">
+      <div class="text-blue-300 text-[10px]">STAGE 5/7: SPACE DEFENDER</div>
+      <div class="text-yellow-400 text-[10px]">
+        BLASTED: <span id="space-score">0</span> / 8
+      </div>
+    </div>
+
+    <div class="pixel-box p-1 rounded-2xl w-full relative overflow-hidden">
+      <canvas id="spaceCanvas" class="w-full h-72 sm:h-80 bg-slate-950 rounded-xl block"></canvas>
+      
+      <div id="space-start-prompt" class="absolute inset-0 bg-slate-950/85 flex flex-col items-center justify-center p-4 text-center space-y-3">
+        <p class="text-xs text-blue-300 leading-relaxed">Drag or tap buttons to aim & blast 8 cute space invaders!</p>
+        <button onclick="runSpaceGame()" class="pixel-btn text-xs py-2.5 px-5">LAUNCH SHIP! 🚀</button>
+      </div>
+    </div>
+
+    <div class="w-full grid grid-cols-2 gap-3 pt-1">
+      <button id="btn-space-left" class="pixel-btn py-4 text-center bg-slate-800 border-slate-600 text-xs active:bg-blue-700">
+        ◀ SHIP LEFT
+      </button>
+      <button id="btn-space-right" class="pixel-btn py-4 text-center bg-slate-800 border-slate-600 text-xs active:bg-blue-700">
+        SHIP RIGHT ▶
+      </button>
+    </div>
+  </section>
+
+  <!-- STAGE 7: PIXEL MAZE EXPLORER -->
+  <section id="stage-7-game" class="hidden w-full max-w-md my-auto flex flex-col items-center gap-2.5 z-10 py-2">
+    <div class="w-full flex justify-between items-center text-xs bg-slate-900/90 p-3 border-2 border-blue-500 rounded-xl">
+      <div class="text-blue-300 text-[10px]">STAGE 6/7: MAZE EXPLORER</div>
+      <div class="text-yellow-400 text-[10px]" id="maze-status">FIND THE KEY 🔑</div>
+    </div>
+
+    <div class="pixel-box p-1 rounded-2xl w-full relative overflow-hidden">
+      <canvas id="mazeCanvas" class="w-full h-72 sm:h-80 bg-slate-950 rounded-xl block"></canvas>
+      
+      <div id="maze-start-prompt" class="absolute inset-0 bg-slate-950/85 flex flex-col items-center justify-center p-4 text-center space-y-3">
+        <p class="text-xs text-blue-300 leading-relaxed">Use DPAD to find key 🔑 & unlock the flower gate 🚪!</p>
+        <button onclick="runMazeGame()" class="pixel-btn text-xs py-2.5 px-5">ENTER MAZE! 🔑</button>
+      </div>
+    </div>
+
+    <div class="w-full max-w-[240px] grid grid-cols-3 gap-2 pt-1">
+      <div></div>
+      <button onclick="moveMazePlayer(0, -1)" class="pixel-btn py-3 text-center bg-blue-600 border-blue-400 text-xs active:bg-blue-700">⬆️</button>
+      <div></div>
+      <button onclick="moveMazePlayer(-1, 0)" class="pixel-btn py-3 text-center bg-blue-600 border-blue-400 text-xs active:bg-blue-700">⬅️</button>
+      <button onclick="moveMazePlayer(0, 1)" class="pixel-btn py-3 text-center bg-blue-600 border-blue-400 text-xs active:bg-blue-700">⬇️</button>
+      <button onclick="moveMazePlayer(1, 0)" class="pixel-btn py-3 text-center bg-blue-600 border-blue-400 text-xs active:bg-blue-700">➡️</button>
+    </div>
+  </section>
+
+  <!-- STAGE 8: MAGICAL FINALE -->
+  <section id="stage-8" class="hidden w-full max-w-lg my-auto flex flex-col items-center justify-center space-y-4 z-10 py-3 px-2 text-center">
+    
+    <!-- Floating Petals Canvas -->
+    <canvas id="petalCanvas" class="fixed inset-0 pointer-events-none z-20"></canvas>
+
+    <div class="pixel-box p-5 sm:p-7 rounded-2xl w-full space-y-5 relative overflow-hidden bg-slate-950/95 border-blue-400">
+      
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-950 border border-blue-400 text-blue-300 text-[9px]">
+        <i class="fa-solid fa-crown text-yellow-400 animate-bounce"></i>
+        <span>QUEST COMPLETED! 🏆</span>
+      </div>
+
+      <!-- Glowing Blue Flowers SVG -->
+      <div onclick="spawnPetalExplosion(event)" class="relative w-full flex justify-center items-center py-1 cursor-pointer group" title="Tap flowers to drop blue petals!">
+        <div class="relative w-48 sm:w-56 h-60 sm:h-64 flex justify-center items-center blue-flower-glow">
+          <svg viewBox="0 0 200 260" class="w-full h-full">
+            <defs>
+              <radialGradient id="petalGlow1" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#93c5fd" />
+                <stop offset="40%" stop-color="#3b82f6" />
+                <stop offset="85%" stop-color="#1d4ed8" />
+                <stop offset="100%" stop-color="#020617" />
+              </radialGradient>
+              <radialGradient id="petalGlow2" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#bfdbfe" />
+                <stop offset="50%" stop-color="#2563eb" />
+                <stop offset="90%" stop-color="#1e40af" />
+                <stop offset="100%" stop-color="#030712" />
+              </radialGradient>
+            </defs>
+
+            <!-- Stems -->
+            <path d="M 100 240 Q 95 180 100 130 T 95 60" fill="none" stroke="#1e3a8a" stroke-width="4.5" />
+            <path d="M 100 170 Q 75 160 65 145 Q 85 140 100 160" fill="#1e40af" opacity="0.85" />
+            <path d="M 98 120 Q 120 110 130 95 Q 110 95 98 115" fill="#1d4ed8" opacity="0.85" />
+
+            <!-- Bottom Flower -->
+            <g transform="translate(95, 185) scale(0.65)">
+              <g class="flower-petals">
+                <path d="M 0 0 C -25 -45 25 -45 0 0" fill="url(#petalGlow1)" transform="rotate(0)" />
+                <path d="M 0 0 C -25 -45 25 -45 0 0" fill="url(#petalGlow1)" transform="rotate(72)" />
+                <path d="M 0 0 C -25 -45 25 -45 0 0" fill="url(#petalGlow1)" transform="rotate(144)" />
+                <path d="M 0 0 C -25 -45 25 -45 0 0" fill="url(#petalGlow1)" transform="rotate(216)" />
+                <path d="M 0 0 C -25 -45 25 -45 0 0" fill="url(#petalGlow1)" transform="rotate(288)" />
+              </g>
+              <circle cx="0" cy="0" r="7" fill="#020617" stroke="#3b82f6" stroke-width="2" />
+            </g>
+
+            <!-- Middle Flower -->
+            <g transform="translate(92, 125) scale(0.85)">
+              <g class="flower-petals">
+                <path d="M 0 0 C -30 -55 30 -55 0 0" fill="url(#petalGlow2)" transform="rotate(15)" />
+                <path d="M 0 0 C -30 -55 30 -55 0 0" fill="url(#petalGlow2)" transform="rotate(87)" />
+                <path d="M 0 0 C -30 -55 30 -55 0 0" fill="url(#petalGlow2)" transform="rotate(159)" />
+                <path d="M 0 0 C -30 -55 30 -55 0 0" fill="url(#petalGlow2)" transform="rotate(231)" />
+                <path d="M 0 0 C -30 -55 30 -55 0 0" fill="url(#petalGlow2)" transform="rotate(303)" />
+              </g>
+              <circle cx="0" cy="0" r="9" fill="#0f172a" stroke="#60a5fa" stroke-width="2.5" />
+            </g>
+
+            <!-- Top Main Flower -->
+            <g transform="translate(100, 58) scale(1.1)">
+              <g class="flower-petals">
+                <path d="M 0 0 C -32 -60 32 -60 0 0" fill="url(#petalGlow1)" transform="rotate(0)" />
+                <path d="M 0 0 C -32 -60 32 -60 0 0" fill="url(#petalGlow1)" transform="rotate(72)" />
+                <path d="M 0 0 C -32 -60 32 -60 0 0" fill="url(#petalGlow1)" transform="rotate(144)" />
+                <path d="M 0 0 C -32 -60 32 -60 0 0" fill="url(#petalGlow1)" transform="rotate(216)" />
+                <path d="M 0 0 C -32 -60 32 -60 0 0" fill="url(#petalGlow1)" transform="rotate(288)" />
+              </g>
+              <circle cx="0" cy="0" r="10" fill="#020617" stroke="#93c5fd" stroke-width="3" />
+              <circle cx="0" cy="0" r="4" fill="#60a5fa" />
+            </g>
+          </svg>
+        </div>
+
+        <span class="absolute bottom-0 text-[8px] sm:text-[9px] text-blue-300 bg-blue-950/90 px-3 py-1 rounded-full border border-blue-400/50">
+          (Tap flowers for glowing petals ✨)
+        </span>
+      </div>
+
+      <!-- Romantic Note -->
+      <div class="space-y-2.5 pt-1">
+        <h2 id="final-message-title" class="text-base sm:text-lg text-blue-300 font-bold glow-text leading-snug">
+          You are the best! 💙
+        </h2>
+        
+        <p class="font-['VT323'] text-xl sm:text-2xl text-blue-100 leading-relaxed tracking-wide">
+          "These flowers are for the most beautiful girl."
+        </p>
+      </div>
+
+      <div class="pt-2 flex flex-col sm:flex-row gap-2.5">
+        <button onclick="spawnPetalExplosion(event)" class="pixel-btn flex-1 py-3 text-[10px] bg-blue-600">
+          SPAWN PETALS 🌸
+        </button>
+        <button onclick="restartGame()" class="pixel-btn flex-1 py-3 text-[10px] bg-slate-800 border-slate-600">
+          REPLAY 🔄
+        </button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SCRIPT LOGIC -->
+  <script>
+    const gameState = {
+      mascot: 'cat',
+      playerName: 'Mariami',
+      score: 0,
+      runnerScore: 0,
+      rhythmScore: 0,
+      spaceScore: 0,
+      hasKey: false,
+      soundEnabled: true
+    };
+
+    const MASCOTS = { cat: '🐱', bear: '🧸', bunny: '🐰' };
+    let audioCtx = null;
+
+    // --- BACKGROUND CANVAS ---
+    function initBgCanvas() {
+      const bgCanvas = document.getElementById('bgCanvas');
+      const bgCtx = bgCanvas.getContext('2d');
+      let bgStars = [];
+
+      function resize() {
+        bgCanvas.width = window.innerWidth;
+        bgCanvas.height = window.innerHeight;
+        bgStars = [];
+        for (let i = 0; i < 60; i++) {
+          bgStars.push({
+            x: Math.random() * bgCanvas.width,
+            y: Math.random() * bgCanvas.height,
+            size: Math.random() * 2 + 0.5,
+            alpha: Math.random(),
+            speed: Math.random() * 0.02 + 0.005
+          });
+        }
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      function animBg() {
+        bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+        bgStars.forEach(s => {
+          s.alpha += s.speed;
+          if (s.alpha > 1 || s.alpha < 0.2) s.speed = -s.speed;
+          bgCtx.fillStyle = `rgba(147, 197, 253, ${Math.abs(s.alpha)})`;
+          bgCtx.fillRect(s.x, s.y, s.size, s.size);
+        });
+        requestAnimationFrame(animBg);
+      }
+      animBg();
+    }
+
+    // --- AUDIO SYSTEM ---
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function toggleAudio() {
+      gameState.soundEnabled = !gameState.soundEnabled;
+      const icon = document.getElementById('sound-icon');
+      icon.className = gameState.soundEnabled ? "fa-solid fa-volume-high" : "fa-solid fa-volume-xmark";
+    }
+
+    function playBeep(freq, duration = 0.1, type = 'square') {
+      if (!gameState.soundEnabled) return;
+      initAudio();
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function playCatchSound() {
+      playBeep(587.33, 0.08);
+      setTimeout(() => playBeep(880, 0.12), 60);
+    }
+
+    function playJumpSound() {
+      playBeep(300, 0.05, 'triangle');
+      setTimeout(() => playBeep(600, 0.08, 'triangle'), 40);
+    }
+
+    function playMatchSound() {
+      playBeep(523.25, 0.08);
+      setTimeout(() => playBeep(659.25, 0.08), 80);
+      setTimeout(() => playBeep(783.99, 0.15), 160);
+    }
+
+    function playFanfare() {
+      if (!gameState.soundEnabled) return;
+      const notes = [523.25, 659.25, 783.99, 1046.50];
+      notes.forEach((freq, idx) => {
+        setTimeout(() => playBeep(freq, 0.2, 'triangle'), idx * 120);
+      });
+    }
+
+    // --- STAGE 1: MASCOT SELECT & NAME ---
+    function selectMascot(type) {
+      playBeep(400, 0.05);
+      gameState.mascot = type;
+      ['cat', 'bear', 'bunny'].forEach(m => {
+        const btn = document.getElementById(`mascot-${m}`);
+        if (m === type) {
+          btn.className = "mascot-btn p-3 border-2 border-blue-500 rounded-xl bg-blue-950 flex flex-col items-center gap-2";
+        } else {
+          btn.className = "mascot-btn p-3 border-2 border-slate-700 rounded-xl bg-slate-950/50 flex flex-col items-center gap-2";
+        }
+      });
+    }
+
+    function startStage2() {
+      playBeep(600, 0.1);
+      const nameInput = document.getElementById('player-name-input').value.trim();
+      if (nameInput) gameState.playerName = nameInput;
+
+      document.getElementById('stage-1').classList.add('hidden');
+      document.getElementById('stage-2').classList.remove('hidden');
+      
+      document.getElementById('player-avatar-display').innerText = MASCOTS[gameState.mascot];
+      document.getElementById('player-name-display').innerText = gameState.playerName;
+
+      initCatcherCanvas();
+    }
+
+    // --- STAGE 2: HEART CATCHER ---
+    let canvas, ctx;
+    let playerX = 150;
+    let playerWidth = 44;
+    let stars = [];
+    let gameInterval = null;
+    let isMovingLeft = false;
+    let isMovingRight = false;
+
+    function initCatcherCanvas() {
+      canvas = document.getElementById('catcherCanvas');
+      ctx = canvas.getContext('2d');
+      canvas.width = canvas.parentElement.clientWidth || 340;
+      canvas.height = 300;
+      playerX = canvas.width / 2 - playerWidth / 2;
+
+      const btnLeft = document.getElementById('btn-left');
+      const btnRight = document.getElementById('btn-right');
+
+      const sL = (e) => { e.preventDefault(); isMovingLeft = true; };
+      const eL = (e) => { e.preventDefault(); isMovingLeft = false; };
+      const sR = (e) => { e.preventDefault(); isMovingRight = true; };
+      const eR = (e) => { e.preventDefault(); isMovingRight = false; };
+
+      btnLeft.addEventListener('touchstart', sL, { passive: false });
+      btnLeft.addEventListener('touchend', eL, { passive: false });
+      btnLeft.addEventListener('touchcancel', eL, { passive: false });
+      btnLeft.addEventListener('mousedown', sL);
+      btnLeft.addEventListener('mouseup', eL);
+      btnLeft.addEventListener('mouseleave', eL);
+
+      btnRight.addEventListener('touchstart', sR, { passive: false });
+      btnRight.addEventListener('touchend', eR, { passive: false });
+      btnRight.addEventListener('touchcancel', eR, { passive: false });
+      btnRight.addEventListener('mousedown', sR);
+      btnRight.addEventListener('mouseup', eR);
+      btnRight.addEventListener('mouseleave', eR);
+
+      // Global safety release if touch leaves button area
+      window.addEventListener('touchend', () => { isMovingLeft = false; isMovingRight = false; });
+      window.addEventListener('mouseup', () => { isMovingLeft = false; isMovingRight = false; });
+
+      canvas.addEventListener('touchmove', (e) => {
+        const touchX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
+        playerX = Math.max(0, Math.min(canvas.width - playerWidth, touchX - playerWidth / 2));
+      });
+    }
+
+    function runCatcherGame() {
+      document.getElementById('game-start-prompt').classList.add('hidden');
+      gameState.score = 0;
+      document.getElementById('game-score').innerText = '0';
+      stars = [];
+      if (gameInterval) clearInterval(gameInterval);
+      gameInterval = setInterval(updateCatcherLoop, 1000 / 60);
+    }
+
+    function updateCatcherLoop() {
+      ctx.fillStyle = '#090d1a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < canvas.width; x += 20) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+      }
+
+      const speed = 4.2;
+      if (isMovingLeft) playerX = Math.max(0, playerX - speed);
+      if (isMovingRight) playerX = Math.min(canvas.width - playerWidth, playerX + speed);
+
+      ctx.font = '26px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(MASCOTS[gameState.mascot], playerX + playerWidth / 2, canvas.height - 12);
+
+      if (Math.random() < 0.06 && stars.length < 6) {
+        const rand = Math.random();
+        stars.push({
+          x: Math.random() * (canvas.width - 24) + 12,
+          y: -10,
+          speed: 3 + Math.random() * 3.5,
+          icon: rand > 0.35 ? (rand > 0.65 ? '💙' : '⭐') : '💣'
+        });
+      }
+
+      for (let i = stars.length - 1; i >= 0; i--) {
+        let s = stars[i];
+        s.y += s.speed;
+
+        ctx.font = '20px sans-serif';
+        ctx.fillText(s.icon, s.x, s.y);
+
+        if (s.y >= canvas.height - 40 && s.y <= canvas.height - 5 &&
+            s.x >= playerX - 10 && s.x <= playerX + playerWidth + 10) {
+          
+          if (s.icon === '💣') {
+            playBeep(150, 0.2);
+            gameState.score = Math.max(0, gameState.score - 1);
+          } else {
+            playCatchSound();
+            gameState.score++;
+          }
+          
+          document.getElementById('game-score').innerText = gameState.score;
+          stars.splice(i, 1);
+
+          if (gameState.score >= 15) {
+            clearInterval(gameInterval);
+            setTimeout(startStage3, 500);
+          }
+          continue;
+        }
+
+        if (s.y > canvas.height + 20) stars.splice(i, 1);
+      }
+    }
+
+    // --- STAGE 3: MEMORY MATCH ---
+    const CARD_ITEMS = ['💙', '🌸', '✨', '👑', '💙', '🌸', '✨', '👑'];
+    let flippedCards = [];
+    let matchedPairs = 0;
+
+    function startStage3() {
+      playFanfare();
+      document.getElementById('stage-2').classList.add('hidden');
+      document.getElementById('stage-3').classList.remove('hidden');
+
+      const grid = document.getElementById('memory-grid');
+      grid.innerHTML = '';
+      flippedCards = [];
+      matchedPairs = 0;
+
+      const shuffled = [...CARD_ITEMS].sort(() => Math.random() - 0.5);
+
+      shuffled.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = "perspective-1000 h-20 cursor-pointer";
+        card.innerHTML = `
+          <div id="card-inner-${index}" class="transform-style-3d w-full h-full relative rounded-xl border-2 border-blue-500 shadow-md">
+            <div class="backface-hidden absolute inset-0 bg-blue-950 flex items-center justify-center rounded-xl font-bold text-blue-300 text-lg">
+              ❓
+            </div>
+            <div class="backface-hidden rotate-y-180 absolute inset-0 bg-slate-900 border-2 border-blue-400 flex items-center justify-center rounded-xl text-2xl">
+              ${item}
+            </div>
+          </div>
+        `;
+        card.onclick = () => flipCard(index, item);
+        grid.appendChild(card);
+      });
+    }
+
+    function flipCard(index, val) {
+      if (flippedCards.length >= 2) return;
+      const inner = document.getElementById(`card-inner-${index}`);
+      if (inner.classList.contains('rotate-y-180')) return;
+
+      playBeep(450, 0.05);
+      inner.classList.add('rotate-y-180');
+      flippedCards.push({ index, val, inner });
+
+      if (flippedCards.length === 2) {
+        if (flippedCards[0].val === flippedCards[1].val) {
+          playMatchSound();
+          matchedPairs++;
+          flippedCards = [];
+          if (matchedPairs === 4) {
+            setTimeout(startStage4Runner, 700);
+          }
+        } else {
+          setTimeout(() => {
+            playBeep(200, 0.1);
+            flippedCards[0].inner.classList.remove('rotate-y-180');
+            flippedCards[1].inner.classList.remove('rotate-y-180');
+            flippedCards = [];
+          }, 800);
+        }
+      }
+    }
+
+    // --- STAGE 4: SKY RUNNER ---
+    let rCanvas, rCtx;
+    let runnerY = 200;
+    let runnerVY = 0;
+    let isJumping = false;
+    let runnerObstacles = [];
+    let runnerStars = [];
+    let runnerInterval = null;
+
+    function startStage4Runner() {
+      playFanfare();
+      document.getElementById('stage-3').classList.add('hidden');
+      document.getElementById('stage-4').classList.remove('hidden');
+
+      rCanvas = document.getElementById('runnerCanvas');
+      rCtx = rCanvas.getContext('2d');
+      rCanvas.width = rCanvas.parentElement.clientWidth || 340;
+      rCanvas.height = 300;
+
+      rCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); triggerRunnerJump(); });
+    }
+
+    function triggerRunnerJump() {
+      if (!isJumping) {
+        playJumpSound();
+        runnerVY = -11;
+        isJumping = true;
+      }
+    }
+
+    function runRunnerGame() {
+      document.getElementById('runner-start-prompt').classList.add('hidden');
+      gameState.runnerScore = 0;
+      document.getElementById('runner-score').innerText = '0';
+      runnerY = 210;
+      runnerVY = 0;
+      isJumping = false;
+      runnerObstacles = [];
+      runnerStars = [];
+
+      if (runnerInterval) clearInterval(runnerInterval);
+      runnerInterval = setInterval(updateRunnerLoop, 1000 / 60);
+    }
+
+    function updateRunnerLoop() {
+      rCtx.fillStyle = '#050c1e';
+      rCtx.fillRect(0, 0, rCanvas.width, rCanvas.height);
+
+      rCtx.strokeStyle = '#3b82f6';
+      rCtx.lineWidth = 3;
+      rCtx.beginPath();
+      rCtx.moveTo(0, 250);
+      rCtx.lineTo(rCanvas.width, 250);
+      rCtx.stroke();
+
+      runnerY += runnerVY;
+      runnerVY += 0.55;
+
+      if (runnerY >= 210) {
+        runnerY = 210;
+        runnerVY = 0;
+        isJumping = false;
+      }
+
+      rCtx.font = '26px sans-serif';
+      rCtx.fillText(MASCOTS[gameState.mascot], 40, runnerY + 24);
+
+      if (Math.random() < 0.025 && runnerObstacles.length < 3) {
+        runnerObstacles.push({ x: rCanvas.width + 20, w: 22, h: 28 });
+      }
+      if (Math.random() < 0.03 && runnerStars.length < 3) {
+        runnerStars.push({ x: rCanvas.width + 40, y: 140 + Math.random() * 60 });
+      }
+
+      rCtx.fillStyle = '#ef4444';
+      for (let i = runnerObstacles.length - 1; i >= 0; i--) {
+        let obs = runnerObstacles[i];
+        obs.x -= 4.5;
+        rCtx.fillRect(obs.x, 250 - obs.h, obs.w, obs.h);
+
+        // Spike collision deduction (-1 star)
+        if (obs.x < 65 && obs.x > 20 && runnerY + 24 > 250 - obs.h) {
+          playBeep(120, 0.15);
+          gameState.runnerScore = Math.max(0, gameState.runnerScore - 1);
+          document.getElementById('runner-score').innerText = gameState.runnerScore;
+          obs.x = -100;
+        }
+
+        if (obs.x < -30) runnerObstacles.splice(i, 1);
+      }
+
+      for (let i = runnerStars.length - 1; i >= 0; i--) {
+        let st = runnerStars[i];
+        st.x -= 3.5;
+        rCtx.font = '20px sans-serif';
+        rCtx.fillText('💙', st.x, st.y);
+
+        if (st.x < 65 && st.x > 15 && Math.abs((runnerY + 10) - st.y) < 30) {
+          playCatchSound();
+          gameState.runnerScore++;
+          document.getElementById('runner-score').innerText = gameState.runnerScore;
+          runnerStars.splice(i, 1);
+
+          if (gameState.runnerScore >= 6) {
+            clearInterval(runnerInterval);
+            setTimeout(startStage5Rhythm, 500);
+          }
+          continue;
+        }
+
+        if (st.x < -30) runnerStars.splice(i, 1);
+      }
+    }
+
+    // --- STAGE 5: RHYTHM TAP ---
+    let rhCanvas, rhCtx;
+    let rhythmNotes = [];
+    let rhythmInterval = null;
+
+    function startStage5Rhythm() {
+      playFanfare();
+      document.getElementById('stage-4').classList.add('hidden');
+      document.getElementById('stage-5').classList.remove('hidden');
+
+      rhCanvas = document.getElementById('rhythmCanvas');
+      rhCtx = rhCanvas.getContext('2d');
+      rhCanvas.width = rhCanvas.parentElement.clientWidth || 340;
+      rhCanvas.height = 300;
+    }
+
+    function runRhythmGame() {
+      document.getElementById('rhythm-start-prompt').classList.add('hidden');
+      gameState.rhythmScore = 0;
+      document.getElementById('rhythm-score').innerText = '0';
+      rhythmNotes = [];
+
+      if (rhythmInterval) clearInterval(rhythmInterval);
+      rhythmInterval = setInterval(updateRhythmLoop, 1000 / 60);
+    }
+
+    function updateRhythmLoop() {
+      rhCtx.fillStyle = '#060a17';
+      rhCtx.fillRect(0, 0, rhCanvas.width, rhCanvas.height);
+
+      const colW = rhCanvas.width / 3;
+
+      for (let i = 0; i < 3; i++) {
+        rhCtx.strokeStyle = 'rgba(59, 130, 246, 0.3)';
+        rhCtx.strokeRect(i * colW, 0, colW, rhCanvas.height);
+      }
+
+      rhCtx.fillStyle = 'rgba(59, 130, 246, 0.4)';
+      rhCtx.fillRect(0, rhCanvas.height - 50, rhCanvas.width, 10);
+      rhCtx.strokeStyle = '#60a5fa';
+      rhCtx.strokeRect(0, rhCanvas.height - 50, rhCanvas.width, 10);
+
+      if (Math.random() < 0.035 && rhythmNotes.length < 4) {
+        const lane = Math.floor(Math.random() * 3);
+        const icons = ['🌸', '💙', '✨'];
+        rhythmNotes.push({
+          lane: lane,
+          y: -20,
+          speed: 3 + Math.random() * 1.5,
+          icon: icons[lane]
+        });
+      }
+
+      for (let i = rhythmNotes.length - 1; i >= 0; i--) {
+        let n = rhythmNotes[i];
+        n.y += n.speed;
+
+        rhCtx.font = '24px sans-serif';
+        rhCtx.textAlign = 'center';
+        rhCtx.fillText(n.icon, n.lane * colW + colW / 2, n.y);
+
+        if (n.y > rhCanvas.height + 20) rhythmNotes.splice(i, 1);
+      }
+    }
+
+    function hitRhythmLane(laneIdx) {
+      playBeep(400 + laneIdx * 150, 0.06);
+      for (let i = 0; i < rhythmNotes.length; i++) {
+        let n = rhythmNotes[i];
+        if (n.lane === laneIdx && n.y >= rhCanvas.height - 75 && n.y <= rhCanvas.height - 25) {
+          playMatchSound();
+          gameState.rhythmScore++;
+          document.getElementById('rhythm-score').innerText = gameState.rhythmScore;
+          rhythmNotes.splice(i, 1);
+
+          if (gameState.rhythmScore >= 8) {
+            clearInterval(rhythmInterval);
+            setTimeout(startStage6Space, 500);
+          }
+          break;
+        }
+      }
+    }
+
+    // --- STAGE 6: SPACE DEFENDER ---
+    let spCanvas, spCtx;
+    let shipX = 150;
+    let spaceLasers = [];
+    let spaceAsteroids = [];
+    let spaceInterval = null;
+    let isShipLeft = false;
+    let isShipRight = false;
+
+    function startStage6Space() {
+      playFanfare();
+      document.getElementById('stage-5').classList.add('hidden');
+      document.getElementById('stage-6').classList.remove('hidden');
+
+      spCanvas = document.getElementById('spaceCanvas');
+      spCtx = spCanvas.getContext('2d');
+      spCanvas.width = spCanvas.parentElement.clientWidth || 340;
+      spCanvas.height = 300;
+      shipX = spCanvas.width / 2 - 15;
+
+      const btnLeft = document.getElementById('btn-space-left');
+      const btnRight = document.getElementById('btn-space-right');
+
+      const sL = (e) => { e.preventDefault(); isShipLeft = true; };
+      const eL = (e) => { e.preventDefault(); isShipLeft = false; };
+      const sR = (e) => { e.preventDefault(); isShipRight = true; };
+      const eR = (e) => { e.preventDefault(); isShipRight = false; };
+
+      btnLeft.addEventListener('touchstart', sL, { passive: false });
+      btnLeft.addEventListener('touchend', eL, { passive: false });
+      btnLeft.addEventListener('touchcancel', eL, { passive: false });
+      btnLeft.addEventListener('mousedown', sL);
+      btnLeft.addEventListener('mouseup', eL);
+      btnLeft.addEventListener('mouseleave', eL);
+
+      btnRight.addEventListener('touchstart', sR, { passive: false });
+      btnRight.addEventListener('touchend', eR, { passive: false });
+      btnRight.addEventListener('touchcancel', eR, { passive: false });
+      btnRight.addEventListener('mousedown', sR);
+      btnRight.addEventListener('mouseup', eR);
+      btnRight.addEventListener('mouseleave', eR);
+
+      // Global safety release for space stage
+      window.addEventListener('touchend', () => { isShipLeft = false; isShipRight = false; });
+      window.addEventListener('mouseup', () => { isShipLeft = false; isShipRight = false; });
+
+      spCanvas.addEventListener('touchmove', (e) => {
+        const touchX = e.touches[0].clientX - spCanvas.getBoundingClientRect().left;
+        shipX = Math.max(0, Math.min(spCanvas.width - 30, touchX - 15));
+      });
+    }
+
+    function runSpaceGame() {
+      document.getElementById('space-start-prompt').classList.add('hidden');
+      gameState.spaceScore = 0;
+      document.getElementById('space-score').innerText = '0';
+      spaceLasers = [];
+      spaceAsteroids = [];
+
+      if (spaceInterval) clearInterval(spaceInterval);
+      spaceInterval = setInterval(updateSpaceLoop, 1000 / 60);
+    }
+
+    function updateSpaceLoop() {
+      spCtx.fillStyle = '#030712';
+      spCtx.fillRect(0, 0, spCanvas.width, spCanvas.height);
+
+      const speed = 4;
+      if (isShipLeft) shipX = Math.max(0, shipX - speed);
+      if (isShipRight) shipX = Math.min(spCanvas.width - 30, shipX + speed);
+
+      // Draw Ship
+      spCtx.font = '24px sans-serif';
+      spCtx.fillText('🚀', shipX, spCanvas.height - 15);
+
+      // Auto Fire Lasers
+      if (Math.random() < 0.12) {
+        playBeep(800, 0.03, 'sawtooth');
+        spaceLasers.push({ x: shipX + 8, y: spCanvas.height - 35 });
+      }
+
+      // Spawn Invaders
+      if (Math.random() < 0.03 && spaceAsteroids.length < 4) {
+        const icons = ['👾', '🛸', '☄️'];
+        spaceAsteroids.push({
+          x: Math.random() * (spCanvas.width - 30),
+          y: -20,
+          speed: 1.5 + Math.random() * 2,
+          icon: icons[Math.floor(Math.random() * icons.length)]
+        });
+      }
+
+      // Update Lasers
+      for (let i = spaceLasers.length - 1; i >= 0; i--) {
+        let l = spaceLasers[i];
+        l.y -= 6;
+        spCtx.fillStyle = '#60a5fa';
+        spCtx.fillRect(l.x, l.y, 4, 10);
+
+        if (l.y < -10) spaceLasers.splice(i, 1);
+      }
+
+      // Update Asteroids & Collisions
+      for (let i = spaceAsteroids.length - 1; i >= 0; i--) {
+        let a = spaceAsteroids[i];
+        a.y += a.speed;
+
+        spCtx.font = '22px sans-serif';
+        spCtx.fillText(a.icon, a.x, a.y);
+
+        // Check Laser Collision
+        for (let j = spaceLasers.length - 1; j >= 0; j--) {
+          let l = spaceLasers[j];
+          if (l.x >= a.x - 5 && l.x <= a.x + 25 && l.y >= a.y - 20 && l.y <= a.y + 10) {
+            playCatchSound();
+            gameState.spaceScore++;
+            document.getElementById('space-score').innerText = gameState.spaceScore;
+            spaceAsteroids.splice(i, 1);
+            spaceLasers.splice(j, 1);
+
+            if (gameState.spaceScore >= 8) {
+              clearInterval(spaceInterval);
+              setTimeout(startStage7Maze, 500);
+            }
+            break;
+          }
+        }
+
+        if (a.y > spCanvas.height + 20) spaceAsteroids.splice(i, 1);
+      }
+    }
+
+    // --- STAGE 7: MAZE EXPLORER ---
+    let mCanvas, mCtx;
+    let mazePlayer = { x: 1, y: 1 };
+    let mazeKey = { x: 5, y: 1 };
+    let mazeDoor = { x: 5, y: 5 };
+    const MAZE_GRID = [
+      [1, 1, 1, 1, 1, 1, 1],
+      [1, 0, 0, 0, 1, 0, 1],
+      [1, 1, 1, 0, 1, 0, 1],
+      [1, 0, 0, 0, 0, 0, 1],
+      [1, 0, 1, 1, 1, 0, 1],
+      [1, 0, 0, 0, 1, 2, 1],
+      [1, 1, 1, 1, 1, 1, 1]
+    ];
+    const CELL_SIZE = 40;
+
+    function startStage7Maze() {
+      playFanfare();
+      document.getElementById('stage-6').classList.add('hidden');
+      document.getElementById('stage-7-game').classList.remove('hidden');
+
+      mCanvas = document.getElementById('mazeCanvas');
+      mCtx = mCanvas.getContext('2d');
+      mCanvas.width = mCanvas.parentElement.clientWidth || 340;
+      mCanvas.height = 300;
+      renderMaze();
+    }
+
+    function runMazeGame() {
+      document.getElementById('maze-start-prompt').classList.add('hidden');
+      mazePlayer = { x: 1, y: 1 };
+      gameState.hasKey = false;
+      document.getElementById('maze-status').innerText = 'FIND THE KEY 🔑';
+      renderMaze();
+    }
+
+    function renderMaze() {
+      if (!mCtx) return;
+      mCtx.fillStyle = '#090d1a';
+      mCtx.fillRect(0, 0, mCanvas.width, mCanvas.height);
+
+      const offsetX = (mCanvas.width - 7 * CELL_SIZE) / 2;
+      const offsetY = (mCanvas.height - 7 * CELL_SIZE) / 2;
+
+      for (let r = 0; r < 7; r++) {
+        for (let c = 0; c < 7; c++) {
+          const x = offsetX + c * CELL_SIZE;
+          const y = offsetY + r * CELL_SIZE;
+
+          if (MAZE_GRID[r][c] === 1) {
+            mCtx.fillStyle = '#1e3a8a';
+            mCtx.fillRect(x, y, CELL_SIZE - 2, CELL_SIZE - 2);
+          } else {
+            mCtx.fillStyle = '#0f172a';
+            mCtx.fillRect(x, y, CELL_SIZE - 2, CELL_SIZE - 2);
+          }
+        }
+      }
+
+      // Key
+      if (!gameState.hasKey) {
+        mCtx.font = '22px sans-serif';
+        mCtx.fillText('🔑', offsetX + mazeKey.x * CELL_SIZE + 8, offsetY + mazeKey.y * CELL_SIZE + 28);
+      }
+
+      // Door
+      mCtx.font = '22px sans-serif';
+      mCtx.fillText(gameState.hasKey ? '🔓' : '🚪', offsetX + mazeDoor.x * CELL_SIZE + 8, offsetY + mazeDoor.y * CELL_SIZE + 28);
+
+      // Player
+      mCtx.font = '24px sans-serif';
+      mCtx.fillText(MASCOTS[gameState.mascot], offsetX + mazePlayer.x * CELL_SIZE + 6, offsetY + mazePlayer.y * CELL_SIZE + 28);
+    }
+
+    function moveMazePlayer(dx, dy) {
+      const newX = mazePlayer.x + dx;
+      const newY = mazePlayer.y + dy;
+
+      if (newX >= 0 && newX < 7 && newY >= 0 && newY < 7 && MAZE_GRID[newY][newX] !== 1) {
+        playBeep(350, 0.04);
+        mazePlayer.x = newX;
+        mazePlayer.y = newY;
+
+        // Pickup Key
+        if (mazePlayer.x === mazeKey.x && mazePlayer.y === mazeKey.y && !gameState.hasKey) {
+          playMatchSound();
+          gameState.hasKey = true;
+          document.getElementById('maze-status').innerText = 'GO TO DOOR 🔓';
+        }
+
+        // Unlock Door
+        if (mazePlayer.x === mazeDoor.x && mazePlayer.y === mazeDoor.y && gameState.hasKey) {
+          playFanfare();
+          setTimeout(startStage8Finale, 400);
+        }
+
+        renderMaze();
+      }
+    }
+
+    // --- STAGE 8: MAGICAL FINALE ---
+    let petalCanvas, petalCtx;
+    let petals = [];
+
+    function startStage8Finale() {
+      document.getElementById('stage-7-game').classList.add('hidden');
+      document.getElementById('stage-8').classList.remove('hidden');
+
+      document.getElementById('final-message-title').innerText = `${gameState.playerName}, you are the best! 💙`;
+
+      initPetalCanvas();
+      playFanfare();
+    }
+
+    function initPetalCanvas() {
+      petalCanvas = document.getElementById('petalCanvas');
+      petalCtx = petalCanvas.getContext('2d');
+      petalCanvas.width = window.innerWidth;
+      petalCanvas.height = window.innerHeight;
+
+      petals = [];
+      for (let i = 0; i < 40; i++) {
+        petals.push(createPetal());
+      }
+      animPetals();
+    }
+
+    function createPetal(x, y) {
+      return {
+        x: x !== undefined ? x : Math.random() * window.innerWidth,
+        y: y !== undefined ? y : Math.random() * -window.innerHeight,
+        size: Math.random() * 8 + 6,
+        speedY: Math.random() * 1.5 + 1,
+        speedX: Math.random() * 1.5 - 0.75,
+        rotation: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.05,
+        color: ['#60a5fa', '#3b82f6', '#93c5fd', '#1d4ed8'][Math.floor(Math.random() * 4)]
+      };
+    }
+
+    function spawnPetalExplosion(e) {
+      playBeep(700, 0.1);
+      const x = e ? e.clientX : window.innerWidth / 2;
+      const y = e ? e.clientY : window.innerHeight / 2;
+      for (let i = 0; i < 25; i++) {
+        petals.push(createPetal(x + (Math.random() * 40 - 20), y + (Math.random() * 40 - 20)));
+      }
+    }
+
+    function animPetals() {
+      if (!petalCtx) return;
+      petalCtx.clearRect(0, 0, petalCanvas.width, petalCanvas.height);
+
+      petals.forEach((p, idx) => {
+        p.y += p.speedY;
+        p.x += p.speedX;
+        p.rotation += p.rotSpeed;
+
+        petalCtx.save();
+        petalCtx.translate(p.x, p.y);
+        petalCtx.rotate(p.rotation);
+        petalCtx.fillStyle = p.color;
+        petalCtx.beginPath();
+        petalCtx.ellipse(0, 0, p.size, p.size / 2, 0, 0, Math.PI * 2);
+        petalCtx.fill();
+        petalCtx.restore();
+
+        if (p.y > window.innerHeight + 20) {
+          petals[idx] = createPetal();
+        }
+      });
+      requestAnimationFrame(animPetals);
+    }
+
+    function restartGame() {
+      playBeep(500, 0.1);
+      document.getElementById('stage-8').classList.add('hidden');
+      document.getElementById('stage-1').classList.remove('hidden');
+    }
+
+    // Window Onload Initialization
+    window.onload = function() {
+      initBgCanvas();
+    };
+  </script>
+</body>
+</html>
